@@ -28,6 +28,7 @@ namespace VendinhaGR.Models
             }
         }
         public string Email { get; set; }
+        public List<Divida> Dividas { get; set; } = new();
     }
 }
 
