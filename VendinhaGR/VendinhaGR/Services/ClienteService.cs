@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using System.Linq;
 using VendinhaGR.Models;
 
 namespace VendinhaGR.Services
@@ -26,39 +27,34 @@ namespace VendinhaGR.Services
             var contexto = new ValidationContext(cliente);
             erros = new List<ValidationResult>();
 
-            var valido = Validator.TryValidateObject(
+            bool valido = Validator.TryValidateObject(
                 cliente,
                 contexto,
                 erros,
                 true
-                );
+            );
 
-            //validação do CPF
-            if (list.Any(x => x.CPF == cliente.CPF))
+            bool cpfJaCadastrado = list.Any(x => x.CPF == cliente.CPF);
+
+            if  (cpfJaCadastrado)
             {
                 erros.Add(new ValidationResult(
                     "Já existe outro cliente utilizando esse CPF!",
                     new[] { "CPF" }
-                    ));
+                ));
 
                 valido = false;
             }
-            //validação do email
-            if (!string.IsNullOrEmpty(cliente.Email) && !cliente.Email.Contains("@"))
+
+            if (!string.IsNullOrEmpty(cliente.Email) &&
+                !new EmailAddressAttribute().IsValid(cliente.Email))
             {
                 erros.Add(new ValidationResult(
-                    "E-mail inválido, por favor, insira um e-mail válido!",
-                    new[] {"Email"}
-                    ));
+                    "E-mail inválido!",
+                    new[] { "Email" }
+                ));
 
                 valido = false;
-            }
-
-            foreach(var erro in erros)
-            {
-                Console.WriteLine("{0}: {1}",
-                    erro.MemberNames.First(),
-                    erro.ErrorMessage);
             }
 
             return valido;
@@ -77,8 +73,8 @@ namespace VendinhaGR.Services
         public List<Cliente> Pesquisa(string texto)
         {
             return list
-                .Where(x => x.Nome.Contains(texto) ||
-                x.Email.Contains(texto) ||
+                .Where(x => x.Nome.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                x.Email != null && x.Email.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
                 x.CPF == texto
                 )
                 .ToList();
@@ -86,9 +82,7 @@ namespace VendinhaGR.Services
         //listar cliente
         public List<Cliente> Listar(int pageSize, int page)
         {
-            var take = pageSize;
-            var skip = (page - 1) * pageSize;
-            return list.Skip(skip).Take(take).ToList();
+            return list.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         }
     }
 }

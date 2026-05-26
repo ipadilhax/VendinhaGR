@@ -38,8 +38,8 @@ namespace VendinhaGR.Services
                 erros,
                 true
              );
-             
-            if(divida.Valor < -0)
+
+            if (divida.Valor <= 0)
             {
                 erros.Add(new ValidationResult(
                     "O valor da dívida deve ser maior do que zero.",
@@ -50,10 +50,10 @@ namespace VendinhaGR.Services
             }
 
             //so pode uma divida em aberto
-            if(list.Any(x => x.ClienteId == divida.ClienteId && x.Situacao == false))
+            if(list.Any(x => x.ClienteId == divida.ClienteId && x.Paga == false))
             {
                 erros.Add(new ValidationResult(
-                    "O cliente já passui uma dívida em aberto!",
+                    "O cliente já possui uma dívida em aberto!",
                     new[] {"ClienteId"}
                     ));
 
@@ -97,7 +97,7 @@ namespace VendinhaGR.Services
                 return false;
             }
 
-            divida.Situacao = true;
+            divida.Paga = true;
             divida.DataPagamento = DateTime.Now;
 
             return true;

@@ -7,12 +7,12 @@ namespace VendinhaGR.Models
 {
     public class Divida
     {
-        [Required]
+        [Key]
         public int Id { get; set; }
         [Required]
         public decimal Valor { get; set; }
         [Required]
-        public bool Situacao { get; set; }
+        public bool Paga { get; set; }
         [Required]
         public DateTime DataCriacao { get; set; }
         public DateTime? DataPagamento { get; set; }
