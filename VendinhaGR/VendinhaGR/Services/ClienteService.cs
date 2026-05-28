@@ -10,6 +10,7 @@ namespace VendinhaGR.Services
     public class ClienteService
     {
         private List<Cliente> list = new List<Cliente>();
+
         //criação cliente
         public bool Criar(Cliente cliente, out List<ValidationResult> erros)
         {
@@ -21,6 +22,7 @@ namespace VendinhaGR.Services
             list.Add(cliente);
             return true;
         }
+
         //validação cliente
         public bool Validar(Cliente cliente, out List<ValidationResult> erros)
         {
@@ -64,11 +66,13 @@ namespace VendinhaGR.Services
         {
             return list.ToList();
         }
+
         //buscando cliente
         public Cliente Buscar(string cpf)
         {
             return list.FirstOrDefault(x => x.CPF == cpf);
         }
+
         //pesquisar cliente
         public List<Cliente> Pesquisa(string texto)
         {
@@ -79,6 +83,7 @@ namespace VendinhaGR.Services
                 )
                 .ToList();
         }
+
         //listar cliente
         public List<Cliente> Listar(int pageSize, int page)
         {
