@@ -34,18 +34,17 @@ namespace VendinhaAPI.Controllers
         [HttpPut]
         public IActionResult Update([FromBody] UpdateClienteDto categoria)
         {
-            var categorias = service.Listar();
-            return Ok(categorias);
-            //exemplo
+            var sucesso = service.Atualizar(categoria, out var erros);
+            return sucesso ? Ok(categoria) : UnprocessableEntity(erros);
         }
 
 
-        //[HttpDelete]
-        //public IActionResult Delete(string search, int pagina)
-        //{
-        //    var categorias = service.Listar();
-        //    return Ok(categorias);
-        //}
+        [HttpDelete]
+        public IActionResult Delete(int id)
+        {
+            var sucesso = service.Excluir(id, out var erros);
+            return sucesso ? Ok(new { mensagem = "Cliente removido com sucesso." }) : UnprocessableEntity(erros);
+        }
 
 
 

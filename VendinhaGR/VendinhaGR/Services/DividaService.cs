@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using System.Linq;
 using VendinhaGR.Models;
+using VendinhaGR.Dtos;
 
 namespace VendinhaGR.Services
 {
@@ -42,7 +44,7 @@ namespace VendinhaGR.Services
             if (divida.Valor <= 0)
             {
                 erros.Add(new ValidationResult(
-                    "O valor da dívida deve ser maior do que zero.",
+                    "O valor da dívida deve ser maior do que zero",
                     new[] {"Valor"}
                     ));
 
@@ -53,7 +55,7 @@ namespace VendinhaGR.Services
             if(list.Any(x => x.ClienteId == divida.ClienteId && x.Paga == false))
             {
                 erros.Add(new ValidationResult(
-                    "O cliente já possui uma dívida em aberto!",
+                    "O cliente já possui uma dívida em aberto",
                     new[] {"ClienteId"}
                     ));
 
@@ -102,6 +104,51 @@ namespace VendinhaGR.Services
 
             return true;
         }
+        //atualizar divida
+        public bool Atualizar(UpdateDividaDto dto, out List<ValidationResult> erros)
+        {
+            erros = new List<ValidationResult>();
+            var dividaExistente = Buscar(dto.Id);
+            if (dividaExistente == null)
+            {
+                erros.Add(new ValidationResult(
+                    "Divida não encontrada",
+                    new[] {"Id"}
+                    ));
+                return false;
+            }
 
+            if (dto.Paga && !dividaExistente.Paga)
+            {
+                dividaExistente.DataPagamento = DateTime.Now;
+            }
+            else if (!dto.Paga)
+            {
+                dividaExistente.DataPagamento = null;
+            }
+
+            dividaExistente.Paga = dto.Paga;
+
+            return true;
+        }
+
+        //excliuir divida
+        public bool Excluir(int id, out List<ValidationResult> erros)
+        {
+            erros = new List<ValidationResult>();
+
+            var divida = Buscar(id);
+            if (divida == null)
+            {
+                erros.Add(new ValidationResult(
+                    "Divida não encontrada",
+                    new[] {"Id"}
+                    ));
+                return false;
+            }
+            list.Remove(divida);
+            return true;
+        }
+        
     }
 }
