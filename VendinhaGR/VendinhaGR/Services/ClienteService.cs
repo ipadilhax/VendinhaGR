@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Linq;
 using VendinhaGR.Models;
 using VendinhaGR.Dtos;
+using VendinhaGR.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace VendinhaGR.Services
 {
     public class ClienteService
     {
-        private List<Cliente> list = new List<Cliente>();
+        private readonly AppDbContext _context;
 
-        //criação cliente
+        // puxando o banco de dados pra ca
+        public ClienteService(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // criando cliente novo
         public bool Criar(Cliente cliente, out List<ValidationResult> erros)
         {
             if (!Validar(cliente, out erros))
@@ -20,93 +27,112 @@ namespace VendinhaGR.Services
                 return false;
             }
 
-            list.Add(cliente);
+            _context.Clientes.Add(cliente);
+            _context.SaveChanges(); // salva no banco real agora
             return true;
         }
 
-        //validação cliente
+        // checando se ta tudo certo com o cliente
         public bool Validar(Cliente cliente, out List<ValidationResult> erros)
         {
             var contexto = new ValidationContext(cliente);
             erros = new List<ValidationResult>();
 
-            bool valido = Validator.TryValidateObject(
-                cliente,
-                contexto,
-                erros,
-                true
-            );
+            bool valido = Validator.TryValidateObject(cliente, contexto, erros, true);
 
-            bool cpfJaCadastrado = list.Any(x => x.CPF == cliente.CPF);
-
-            if  (cpfJaCadastrado)
+            // testando se o cpf é de vdd msm
+            if (!CpfValido(cliente.CPF))
             {
-                erros.Add(new ValidationResult(
-                    "Já existe outro cliente utilizando esse CPF!",
-                    new[] { "CPF" }
-                ));
-
+                erros.Add(new ValidationResult("O CPF informado não é válido!", new[] { "CPF" }));
                 valido = false;
             }
 
-            if (!string.IsNullOrEmpty(cliente.Email) &&
-                !new EmailAddressAttribute().IsValid(cliente.Email))
+            // travando se ja tiver outro mano com esse cpf
+            bool cpfJaCadastrado = _context.Clientes.Any(x => x.CPF == cliente.CPF && x.Id != cliente.Id);
+            if (cpfJaCadastrado)
             {
-                erros.Add(new ValidationResult(
-                    "E-mail inválido!",
-                    new[] { "Email" }
-                ));
+                erros.Add(new ValidationResult("Já existe outro cliente utilizando esse CPF!", new[] { "CPF" }));
+                valido = false;
+            }
 
+            // checando o email
+            if (!string.IsNullOrEmpty(cliente.Email) && !new EmailAddressAttribute().IsValid(cliente.Email))
+            {
+                erros.Add(new ValidationResult("E-mail inválido!", new[] { "Email" }));
                 valido = false;
             }
 
             return valido;
         }
 
-        public List<Cliente> Listar()
-        {
-            return list.ToList();
-        }
 
-        //buscando cliente
-        public Cliente Buscar(string cpf)
+        public List<ClienteResumoDto> Listar(int pageSize, int page)
         {
-            return list.FirstOrDefault(x => x.CPF == cpf);
-        }
-
-        //pesquisar cliente
-        public List<Cliente> Pesquisa(string texto)
-        {
-            return list
-                .Where(x => x.Nome.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-                x.Email != null && x.Email.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-                x.CPF == texto
-                )
+            // busca no banco e ja soma todas as dividas (historico total)
+            var query = _context.Clientes
+                .Select(c => new
+                {
+                    Cliente = c,
+                    // pra somar tudo de uma vez
+                    TotalDividas = c.Dividas.Sum(d => (decimal?)d.Valor) ?? 0
+                })
+                .OrderByDescending(x => x.TotalDividas) 
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
+
+            return query.Select(x => new ClienteResumoDto
+            {
+                Id = x.Cliente.Id,
+                Nome = x.Cliente.Nome,
+                CPF = x.Cliente.CPF,
+                Idade = x.Cliente.Idade,
+                Email = x.Cliente.Email,
+                TotalDividas = x.TotalDividas
+            }).ToList();
         }
 
-        //listar cliente
-        public List<Cliente> Listar(int pageSize, int page)
+        // pesquisa por nome tipo um filtro 
+        public List<ClienteResumoDto> Pesquisa(string texto, int pageSize, int page)
         {
-            return list.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var query = _context.Clientes
+                .Where(x => EF.Functions.Like(x.Nome, $"%{texto}%"))
+                .Select(c => new
+                {
+                    Cliente = c,
+                    // somando todas as dividas do cara tbm
+                    TotalDividas = c.Dividas.Sum(d => (decimal?)d.Valor) ?? 0
+                })
+                .OrderByDescending(x => x.TotalDividas)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return query.Select(x => new ClienteResumoDto
+            {
+                Id = x.Cliente.Id,
+                Nome = x.Cliente.Nome,
+                CPF = x.Cliente.CPF,
+                Idade = x.Cliente.Idade,
+                Email = x.Cliente.Email,
+                TotalDividas = x.TotalDividas
+            }).ToList();
         }
 
-        //atualizar cliente
+        // atualizando os dados do cliente
         public bool Atualizar(UpdateClienteDto dto, out List<ValidationResult> erros)
         {
             erros = new List<ValidationResult>();
 
-            //procurando o cliente na lista pelo id do cliente
-            var clienteExistente = list.FirstOrDefault(x => x.Id == dto.Id);
+            // acha o cliente no banco primeiro pelo id
+            var clienteExistente = _context.Clientes.FirstOrDefault(x => x.Id == dto.Id);
             if (clienteExistente == null)
             {
-                erros.Add(new ValidationResult(
-                    "Cliente não encontrado",
-                    new[] {"Id"}
-                    ));
+                erros.Add(new ValidationResult("Cliente não encontrado", new[] { "Id" }));
                 return false;
             }
-            //criando um temporario para rodar na função validar
+
+            // cria um fake so pra rodar na validacao
             var clienteValida = new Cliente()
             {
                 Id = dto.Id,
@@ -118,46 +144,75 @@ namespace VendinhaGR.Services
 
             if (!Validar(clienteValida, out erros))
             {
-                //aqui fazendo uma variavel que so bloqueia se o CPF for de outro cliente
-                bool cpfDeOutroCliente = list.Any(x => x.CPF == dto.CPF && x.Id != dto.Id);
-                //agora aqui preciso usar essa variavel para fazer a verificação
-                if (cpfDeOutroCliente) //se o cpf de outro cliente for true
-                {
-                    return false;
-                }
-                else //se o cpf de outro cliente for false
-                {
-                    erros.RemoveAll(x => x.ErrorMessage != null && x.ErrorMessage.Contains("CPF"));
-                    if (erros.Count > 0) return false;
-                }
+                return false;
             }
-            //se passou em tudo salva as novas alterações que o cliente fez na lista
+
+            // se passou em tudo salva as novas alteracoes do cliente
             clienteExistente.Nome = dto.Nome;
             clienteExistente.CPF = dto.CPF;
             clienteExistente.DataNascimento = dto.DataNascimento;
             clienteExistente.Email = dto.Email;
 
+            _context.SaveChanges();
             return true;
-            
-            
         }
-        //excluir cliente
+
+        // apagar cliente
         public bool Excluir(int id, out List<ValidationResult> erros)
         {
             erros = new List<ValidationResult>();
 
-            var cliente = list.FirstOrDefault(x => x.Id == id);
+            var cliente = _context.Clientes.FirstOrDefault(x => x.Id == id);
             if (cliente == null)
             {
-                erros.Add(new ValidationResult(
-                    "Cliente não encontrado",
-                    new[] {"Id"}
-                    ));
+                erros.Add(new ValidationResult("Cliente não encontrado", new[] { "Id" }));
                 return false;
             }
-            list.Remove(cliente);
-            return true;
 
+            _context.Clientes.Remove(cliente);
+            _context.SaveChanges();
+            return true;
+        }
+
+        // continha chata pra validar o cpf msm (pesquisa)
+        private static bool CpfValido(string cpf)
+        {
+            if (string.IsNullOrWhiteSpace(cpf)) return false;
+
+            cpf = new string(cpf.Where(char.IsDigit).ToArray());
+            if (cpf.Length != 11) return false;
+
+            string[] invalidos = {
+                "00000000000", "11111111111", "22222222222", "33333333333", "44444444444",
+                "55555555555", "66666666666", "77777777777", "88888888888", "99999999999"
+            };
+            if (invalidos.Contains(cpf)) return false;
+
+            int[] multiplicador1 = { 10, 9, 8, 7, 6, 5, 4, 3, 2 };
+            int[] multiplicador2 = { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2 };
+
+            string tempCpf = cpf.Substring(0, 9);
+            int soma = 0;
+
+            for (int i = 0; i < 9; i++)
+                soma += int.Parse(tempCpf[i].ToString()) * multiplicador1[i];
+
+            int resto = soma % 11;
+            resto = resto < 2 ? 0 : 11 - resto;
+
+            string digito = resto.ToString();
+            tempCpf += digito;
+            soma = 0;
+
+            for (int i = 0; i < 10; i++)
+                soma += int.Parse(tempCpf[i].ToString()) * multiplicador2[i];
+
+            resto = soma % 11;
+            resto = resto < 2 ? 0 : 11 - resto;
+
+            digito += resto.ToString();
+
+            return cpf.EndsWith(digito);
         }
     }
 }

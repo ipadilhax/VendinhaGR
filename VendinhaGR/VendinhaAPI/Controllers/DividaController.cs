@@ -5,6 +5,7 @@ using VendinhaGR.Dtos;
 
 namespace VendinhaAPI.Controllers
 {
+    [ApiController]
     [Route("api/[controller]")]
     public class DividaController : ControllerBase
     {
@@ -16,15 +17,28 @@ namespace VendinhaAPI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(string search, int pagina)
+        public IActionResult Get(int pagina = 1)
         {
-            var dividas = service.Listar();
+            var dividas = service.Listar(10, pagina);
+            return Ok(dividas);
+        }
+
+        [HttpGet("cliente/{clienteId}")]
+        public IActionResult GetPorCliente(int clienteId, int pagina = 1)
+        {
+            var dividas = service.BuscarPorCliente(clienteId, 10, pagina);
             return Ok(dividas);
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] Divida divida)
+        public IActionResult Post([FromBody] CreateDividaDto dto)
         {
+            var divida = new Divida
+            {
+                Valor = dto.Valor,
+                ClienteId = dto.ClienteId
+            };
+
             var sucesso = service.Criar(divida, out var erros);
             return sucesso ? Ok(divida) : UnprocessableEntity(erros);
         }

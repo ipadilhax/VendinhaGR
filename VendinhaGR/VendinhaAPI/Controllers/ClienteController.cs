@@ -5,6 +5,7 @@ using VendinhaGR.Dtos;
 
 namespace VendinhaAPI.Controllers
 {
+    [ApiController]
     [Route("api/[controller]")]
     public class ClienteController : ControllerBase
     {
@@ -16,16 +17,29 @@ namespace VendinhaAPI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(string search, int pagina)
+        public IActionResult Get(string? search = null, int pagina = 1)
         {
-            var categorias = service.Listar();
-            return Ok(categorias);
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                return Ok(service.Pesquisa(search, 10, pagina));
+            }
+
+            return Ok(service.Listar(10, pagina));
         }
 
 
         [HttpPost]
-        public IActionResult Post([FromBody] Cliente cliente)
+        public IActionResult Post([FromBody] CreateClienteDto dto)
         {
+            // a gente transforma o dto na entidade real aqui pra mandar pro service
+            var cliente = new Cliente
+            {
+                Nome = dto.Nome,
+                CPF = dto.CPF,
+                DataNascimento = dto.DataNascimento,
+                Email = dto.Email
+            };
+
             var sucesso = service.Criar(cliente, out var erros);
             return sucesso ? Ok(cliente) : UnprocessableEntity(erros);
         }
@@ -45,12 +59,5 @@ namespace VendinhaAPI.Controllers
             var sucesso = service.Excluir(id, out var erros);
             return sucesso ? Ok(new { mensagem = "Cliente removido com sucesso." }) : UnprocessableEntity(erros);
         }
-
-
-
     }
-
-
-
-
 }

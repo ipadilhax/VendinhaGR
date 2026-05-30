@@ -12,7 +12,7 @@ namespace VendinhaGR.Models
         public int Id { get; set; }
         [Required, MaxLength(100)]
         public string Nome { get; set; }
-        [Required, MaxLength(11)]
+        [Required, StringLength(11, MinimumLength = 11)]
         public string CPF { get; set; }
         [Required]
         public DateTime DataNascimento { get; set; }
