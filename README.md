@@ -1,4 +1,4 @@
-Vendinha Plena - API de controle de Fiados
+VendinhaGR - API de controle de Fiados
 
 Olá! Esta é uma API RESTful desenvolvida em .NET Core para informatizar o controle de contas e dívidas (fiado) dos clientes de uma pequena venda, substituindo o controle de dívidas pagas no papel.
 
@@ -62,7 +62,7 @@ O sistema atende a todos os requisitos solicitados.
 
 3- Restaure os pacotes NuGet: dotnet restore
 
-4- Preparação e inicialização do Banco de Dados: O projeto utiliza o SQLite como mecanismo de persistência, armazenando os dados localmente no arquivo vendinha.db.
+4- Preparação e inicialização do Banco de Dados: O projeto utiliza o SQLite como mecanismo de persistência, armazenando os dados localmente no arquivo vendinhagr.db.
 A aplicação foi configurada para criar o banco de dados e aplicar as tabelas automaticamente na primeira execução. Sendo assim, basta iniciar o projeto para que a base seja estruturada.
 
 5- Inicie a API: dotnet run --project VendinhaAPI
