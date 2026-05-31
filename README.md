@@ -67,7 +67,7 @@ A aplicação foi configurada para criar o banco de dados e aplicar as tabelas a
 
 5- Inicie a API: dotnet run --project VendinhaAPI
 
-6- Acesse o Swagger: Assim que o terminal indicar que o serviço está de pé, abra o seu navegador e acesse a URL do Swagger (que geralmente é http://localhost:5000/swagger ou https://localhost:7001/swagger) para interagir com os endpoints de Clientes e Dívidas.
+6 - Acesse o Swagger: Assim que o terminal indicar que o serviço está de pé, no Visual Studio, vá até o canto inferior direito e procure por uma aba chamada "Saída". Assim que estiver lá, suba um pouco até encontrar o link da aplicação. Pressione Ctrl + clique para abri-lo e, na barra de URL do seu navegador, adicione /swagger no final para abrir o Swagger. Lá você poderá realizar as requisições.
 
 7- Script do Banco de Dados: Para fins de avaliação, um script de criação do banco de dados chamado script_banco.sql foi gerado via Entity Framework e ele fica na raiz deste repositório. Ele contém todas as instruções DDL para a criação de tabelas (Clientes, Dívidas) com seus respectivos relacionamentos e restrições.
 
