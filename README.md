@@ -12,7 +12,7 @@ ORM: Entity Framework Core
 
 Banco de Dados: SQLite
 
-Documentação de API: Swagger / OpenAPI
+Documentação de API: Swagger
 
 Arquitetura do Projeto
 
@@ -29,7 +29,7 @@ O sistema atende a todos os requisitos solicitados.
 
 -Cadastro completo: Com validação de campos obrigatórios.
 
--Validação de CPF: Onde construímos um algoritmo matemático real implementado para garantir que não entrem CPFs inválidos ou CPFs duplicados.
+-Validação de CPF: implementamos um algoritmo matemático real implementado para garantir que não entrem CPFs inválidos ou CPFs duplicados.
 
 -Cálculo de idade: A idade do cliente é calculada dinamicamente na hora da listagem, baseada na sua data de nascimento.
 
@@ -56,9 +56,9 @@ O sistema atende a todos os requisitos solicitados.
 
 * Passo a passo:
 
-1- Clone o repositório: git clone https://github.com/SEU_USUARIO/VendinhaPlena.git
+1- Clone o repositório: git clone https://github.com/ipadilhax/VendinhaGR.git
 
-2- Navegue até a pasta raiz della solução: cd VendinhaPlena
+2- Navegue até a pasta raiz dela solução: cd VendinhaGR
 
 3- Restaure os pacotes NuGet: dotnet restore
 
