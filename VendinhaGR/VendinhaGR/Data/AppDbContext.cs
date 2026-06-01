@@ -34,5 +34,14 @@ namespace VendinhaGR.Data
                 .HasForeignKey(d => d.ClienteId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
+
+        // configurando pro c# aceitar o formato de numero do sqlite sem chorar
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            // avisa o banco que todo campo 'decimal' do c# deve ser lido/salvo como 'double' no sqlite
+            configurationBuilder
+                .Properties<decimal>()
+                .HaveConversion<double>();
+        }
     }
 }
