@@ -60,7 +60,11 @@ O sistema atende a todos os requisitos solicitados.
 
 2- Navegue até a pasta raiz dela solução: cd VendinhaGR
 
-3- Restaure os pacotes NuGet: dotnet restore
+3- Copie esses códigos e cole no terminal para ajustar os pacotes Nuget:
+
+dotnet restore
+dotnet tool install --global dotnet-ef
+
 
 4- Preparação e inicialização do Banco de Dados: O projeto utiliza o SQLite como mecanismo de persistência, armazenando os dados localmente no arquivo vendinhagr.db.
 A aplicação foi configurada para criar o banco de dados e aplicar as tabelas automaticamente na primeira execução. Sendo assim, basta iniciar o projeto para que a base seja estruturada.
